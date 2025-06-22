@@ -1,7 +1,3 @@
- <
-    return res.status(400).json({ error: 'กรุณาใส่ URL' });
-}
-<!DOCTYPE htm1>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
