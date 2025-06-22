@@ -1,4 +1,4 @@
-<DOCTYPE htm1>
+<!DOCTYPE htm1>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
