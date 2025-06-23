@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ดาวน์โหลดวิดีโอ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0077b6">
+    <link rel="stylesheet" href="public/styles.css">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>ดาวน์โหลดวิดีโอออนไลน์</h1>
+        <input type="text" id="videoURL" placeholder="วางลิงก์วิดีโอที่นี่">
+        <br>
+        <button onclick="simulateDownload()">ดึงวิดีโอ</button>
+        <div id="result"></div>
+        <div class="ads">
+            <p>พื้นที่โฆษณาของคุณ ✨</p>
+        </div>
+    </div>
+
+    <div class="video-ad-overlay" id="videoAd">
+        <video id="adVideo" controls autoplay>
+            <source src="public/ad.mp4" type="video/mp4">
+            วิดีโอไม่สามารถเล่นได้
+        </video>
+        <button class="close-ad-btn" id="closeAdBtn" onclick="closeAd()" disabled>ข้ามโฆษณา (5)</button>
+    </div>
+
+    <script src="public/main.js"></script>
+</body>
+</html>
+```
+
+### 2. server.js
+```javascript
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const ytdlp = require('yt-dlp-exec');
+
+const app = express();
+const port = 3000;
+
+app.use(cors());
+app.use(express.static(__dirname));
+
+app.get('/api/getVideo', async (req, res) => {
+    const videoUrl = req.query.url;
+
+    if (!videoUrl) {
+        return res.status(400).json({ error: 'กรุณาใส่ URL' });
+    }
+
+    try {
+        const videoInfo = await ytdlp(videoUrl, {
+            dumpSingleJson: true,
+            noWarnings: true,
+            noCallHome: true,
+            preferFreeFormats: true,
+            youtubeSkipDashManifest: true
+        });
+
+        res.json(videoInfo);
+    } catch (error) {
+        console.error('Error fetching video:', error);
+        res.status(500).json({ error: 'ไม่สามารถดึงข้อมูลวิดีโอได้' });
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
+```
+
+
+### 3. package.json
+```json
+{
+  "name": "video-downloader",
+  "version": "1.0.0",
+  "description": "ดาวน์โหลดวิดีโอออนไลน์",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "yt-dlp-exec": "^1.0.1"
+  }
+}
+```
+
+### 4. vercel.json
+```json
+{
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/server.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+```
+
+### 5. manifest.json
+```json
+{
+  "name": "ดาวน์โหลดวิดีโอออนไลน์",
+  "short_name": "โหลดวิดีโอ",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0077b6",
+  "icons": [
+    {
+      "src": "public/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+### 6. service-worker.js
+```javascript
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open('video-downloader-cache').then(cache => {
+            return cache.addAll([
+                '/',
+                '/index.html',
+                '/public/styles.css',
+                '/public/ad.mp4',
+                '/manifest.json'
+            ]);
+        })
+    );
+});
+
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request).then(response => {
+            return response || fetch(event.request);
+        })
+    );
+});
+```
+
+### 7. public/styles.css
+```css
+/* ย้าย CSS ที่คุณเขียนไว้ใน HTML มาไว้ในไฟล์นี้ทั้งหมด */
+```
+
+### 8. public/ad.mp4
+ใส่ไฟล์โฆษณาวิดีโอที่คุณต้องการให้เล่นตอนโหลดวิดีโอ
+
+---
+### ✅ เสร็จแล้ว ให้อัปโหลดทุกไฟล์ขึ้น GitHub
+### ✅ จากนั้นไปเชื่อมกับ Vercel อีกครั้งเพื่อ Deploy
+
+ถ้าต้องการให้ผมเตรียมโครงสร้างเป็นไฟล์ ZIP ให้โหลดไปใช้เลย บอกได้เลยครับ 🙏
+
+ผมเตรียมโครงสร้างโปรเจกต์แบบถูกต้องไว้ให้คุณแล้วครับ 👆
+ทั้งหมดนี้ต้องสร้างเป็น ไฟล์แยกกัน แบบที่ผมเขียนให้เลยนะครับ แล้วค่อยอัปโหลดขึ้น GitHub ทีละไฟล์
+
+✅ ถ้าพร้อมให้ผมทำเป็นไฟล์ ZIP สำหรับดาวน์โหลดไปวางในเครื่องได้ทันที ก็บอกได้เลยครับ ผมจะทำให้ครบทุกไฟล์พร้อมใช้เลยครับ 🙏
+
